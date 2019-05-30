@@ -54,7 +54,7 @@ public class TestCase1 {
         jsonObject.addProperty("password", "Lusin86");
         jsonObject.addProperty("email", username + "@gmail.com");
         jsonObject.addProperty("provider", "picsart");
-
+ 
 
         Response response = given().
                 contentType(ContentType.JSON).
