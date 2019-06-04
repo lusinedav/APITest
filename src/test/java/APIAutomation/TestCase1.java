@@ -15,7 +15,11 @@ import static org.hamcrest.Matchers.*;
  */
 public class TestCase1 {
 
-    @Test
+    static String  key;
+    static String username;
+    static String password;
+
+    @Test(priority = 0)
     public void signInTest() {
 
         JsonObject jsonObject = new JsonObject();
@@ -45,16 +49,14 @@ public class TestCase1 {
 
     }
 
-
-    @Test
+    @Test(priority = 1)
     public static void signUpTest() {
         JsonObject jsonObject = new JsonObject();
-        String username = UUID.randomUUID().toString().substring(0, 5);
+        String username = UUID.randomUUID().toString().substring(0, 9);
         jsonObject.addProperty("username", username);
         jsonObject.addProperty("password", "Lusin86");
         jsonObject.addProperty("email", username + "@gmail.com");
         jsonObject.addProperty("provider", "picsart");
- 
 
         Response response = given().
                 contentType(ContentType.JSON).
@@ -62,20 +64,53 @@ public class TestCase1 {
                 when().
                 post("https://api.picsart.com/users/signup.json");
         System.out.println( "response is : " + response.getBody().asString());
+        key = response.path("key");
+        username = response.path("username");
+        password = response.path("password");
         response.then().statusCode(200).body(
                 "key", notNullValue(),
 //                "name", is(username),
                 "photo", is("https://cdn190.picsart.com/232804661007900.png"),
                 "email", is(username + "@gmail.com"),
                 "gender", is(""),
-                "provider", is("picsart"),
-                "registered", not(false),
-                "notification_settings.in_app",notNullValue(),
-                "notification_settings.push",notNullValue()
-
-
+                "provider", is("picsart")
+//                "registered", not(false),
+//                "notification_settings.in_app",notNullValue(),
+//                "notification_settings.push",notNullValue()
         );
 
     }
 
+    @Test(priority = 2)
+    public static void DeleteUserTest(){
+        Response response = given().
+                queryParam("key", key).
+                contentType(ContentType.JSON).
+                when().
+                post("https://api.picsart.com/users/remove");
+        System.out.println( "response is : " + response.getBody().asString());
+
+        response.then().statusCode(200).body(
+                "status", is("success")
+        );
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("username", username);
+        jsonObject.addProperty("password", password);
+
+       response = given().
+                contentType(ContentType.JSON).
+                body(jsonObject).
+                when().
+                post("https://api.picsart.com/users/signin.json");
+        System.out.println( "response is : " + response.getBody().asString());
+        response.then().
+                statusCode(200).
+                body(
+                        "status", is("error"),
+                        "reason", is("username_or_password_incorrect"),
+                        "message", is("Username or password incorrect")
+
+                );
+    }
 }
